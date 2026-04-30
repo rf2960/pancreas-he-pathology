@@ -1,6 +1,6 @@
 # Pancreas H&E Pathology AI
 
-[![Validate repository](https://github.com/rf2960/H-E/actions/workflows/validate.yml/badge.svg)](https://github.com/rf2960/H-E/actions/workflows/validate.yml)
+[![Validate repository](https://github.com/rf2960/pancreas-he-pathology/actions/workflows/validate.yml/badge.svg)](https://github.com/rf2960/pancreas-he-pathology/actions/workflows/validate.yml)
 
 Computer vision pipeline for classifying pancreatic H&E histology tiles from Reya Lab whole-slide images. This repository presents the full public research workflow: QuPath annotation export, tile-level data engineering, PyTorch modeling, leave-one-slide-out validation, post-hoc threshold tuning, reproducibility docs, and publication-style figures.
 

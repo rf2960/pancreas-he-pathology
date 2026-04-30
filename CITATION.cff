@@ -5,7 +5,7 @@ authors:
   - family-names: Feng
     given-names: Ruochen
 year: 2026
-repository-code: "https://github.com/rf2960/H-E"
+repository-code: "https://github.com/rf2960/pancreas-he-pathology"
 license: MIT
 keywords:
   - histopathology

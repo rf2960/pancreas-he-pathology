@@ -10,6 +10,14 @@ pancreas-he-pathology-ai
 
 Why: it is searchable, specific, and immediately communicates domain plus ML content. `H-E` is concise but too ambiguous for recruiters scanning a GitHub profile.
 
+Current public repository name:
+
+```text
+pancreas-he-pathology
+```
+
+This is already strong and resume-friendly. Adding `ai` would make the ML angle slightly more explicit, but the current name is clean, professional, and not over-marketed.
+
 Other strong options:
 
 - `pancreatic-histology-cv`
