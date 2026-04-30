@@ -11,6 +11,7 @@ import csv
 import json
 import math
 import random
+import re
 import shutil
 from pathlib import Path
 
@@ -25,6 +26,7 @@ EXAMPLES_DIR = REPO_ROOT / "examples" / "tiles"
 
 DEFAULT_DATA_DIR = Path(r"C:\Users\ruoch\Desktop\CU\Research\H&E ML\spatial_tiles_dataset")
 DEFAULT_QUPATH_ENTRY = Path(r"C:\Users\ruoch\Desktop\CU\Research\H&E ML\QuPath Project\data\15")
+DEFAULT_QUPATH_R425_ENTRY = Path(r"C:\Users\ruoch\Desktop\CU\Research\H&E ML\QuPath Project\data\17")
 
 CLASSES = ["ADM", "PanIN_LG", "PanIN_HG", "Other"]
 TISSUE_CLASSES = ["ADM", "PanIN_LG", "PanIN_HG"]
@@ -34,6 +36,13 @@ COLORS = {
     "PanIN_HG": "#54A24B",
     "Other": "#9D755D",
     "PDAC": "#B279A2",
+}
+OVERLAY_COLORS = {
+    "ADM": (0, 210, 190, 70),
+    "PanIN_LG": (96, 70, 180, 90),
+    "PanIN_HG": (45, 120, 220, 85),
+    "PDAC": (246, 150, 210, 65),
+    "Other": (255, 196, 0, 80),
 }
 
 
@@ -327,6 +336,133 @@ def plot_qupath_annotation_example() -> None:
     plt.close(fig)
 
 
+def collect_slide_tiles(slide_id: str, data_dir: Path) -> list[tuple[str, int, int]]:
+    pattern = re.compile(rf"{re.escape(slide_id)}_(.+?)_\[x=(\d+),y=(\d+)\]", re.IGNORECASE)
+    tiles: list[tuple[str, int, int]] = []
+    if not data_dir.exists():
+        return tiles
+    for path in data_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".tif", ".tiff"}:
+            continue
+        match = pattern.search(path.name)
+        if not match:
+            continue
+        tiles.append((match.group(1), int(match.group(2)), int(match.group(3))))
+    return tiles
+
+
+def draw_tile_overlay(
+    base: Image.Image,
+    tiles: list[tuple[str, int, int]],
+    slide_width: int,
+    slide_height: int,
+    tile_size: int = 256,
+) -> Image.Image:
+    display = base.convert("RGBA")
+    overlay = Image.new("RGBA", display.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    sx = display.width / slide_width
+    sy = display.height / slide_height
+
+    # Draw large/background classes first so rarer lesion labels remain visible.
+    draw_order = ["Other", "PDAC", "ADM", "PanIN_HG", "PanIN_LG"]
+    for label in draw_order:
+        color = OVERLAY_COLORS[label]
+        outline = color[:3] + (210,)
+        for tile_label, x, y in tiles:
+            if tile_label != label:
+                continue
+            x0 = int(x * sx)
+            y0 = int(y * sy)
+            x1 = max(x0 + 2, int((x + tile_size) * sx))
+            y1 = max(y0 + 2, int((y + tile_size) * sy))
+            draw.rectangle([x0, y0, x1, y1], fill=color, outline=outline, width=1)
+
+    return Image.alpha_composite(display, overlay).convert("RGB")
+
+
+def plot_r425_qupath_overlay() -> None:
+    thumbnail_path = DEFAULT_QUPATH_R425_ENTRY / "thumbnail.jpg"
+    summary_path = DEFAULT_QUPATH_R425_ENTRY / "summary.json"
+    server_path = DEFAULT_QUPATH_R425_ENTRY / "server.json"
+    if not thumbnail_path.exists() or not summary_path.exists() or not server_path.exists():
+        return
+
+    server = json.loads(server_path.read_text(encoding="utf-8"))
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    slide_width = int(server["metadata"]["width"])
+    slide_height = int(server["metadata"]["height"])
+    tiles = collect_slide_tiles("R4-25", DEFAULT_DATA_DIR)
+
+    thumb = Image.open(thumbnail_path).convert("RGB")
+    thumb = ImageOps.contain(thumb, (1320, 880), method=Image.Resampling.LANCZOS)
+    overlay_img = draw_tile_overlay(thumb, tiles, slide_width, slide_height)
+
+    counts = summary["hierarchy"]["annotationClassificationCounts"]
+    tile_counts: dict[str, int] = {}
+    for label, _, _ in tiles:
+        tile_counts[label] = tile_counts.get(label, 0) + 1
+
+    fig = plt.figure(figsize=(13.5, 7.2))
+    gs = fig.add_gridspec(1, 2, width_ratios=[3.3, 1.0])
+    ax_img = fig.add_subplot(gs[0, 0])
+    ax_side = fig.add_subplot(gs[0, 1])
+
+    ax_img.imshow(overlay_img)
+    ax_img.axis("off")
+    ax_img.set_title("R4-25.svs - QuPath-style tile overlay", fontsize=14, pad=12)
+
+    # Mini-map inset, echoing the QuPath navigation thumbnail.
+    inset = ax_img.inset_axes([0.77, 0.73, 0.20, 0.20])
+    inset.imshow(thumb)
+    inset.set_xticks([])
+    inset.set_yticks([])
+    for spine in inset.spines.values():
+        spine.set_edgecolor("#475467")
+        spine.set_linewidth(1)
+
+    ax_side.axis("off")
+    ax_side.set_title("Annotation / tile inventory", fontsize=13, pad=10)
+    y = 0.88
+    rows = [
+        ("ADM", counts.get("ADM", 0), tile_counts.get("ADM", 0), "#00B8A9"),
+        ("PanIN LG", counts.get("PanIN LG", 0), tile_counts.get("PanIN_LG", 0), "#6046B4"),
+        ("PanIN HG", counts.get("PanIN HG", 0), tile_counts.get("PanIN_HG", 0), "#2D78DC"),
+        ("PDAC", counts.get("PDAC", 0), tile_counts.get("PDAC", 0), "#D94FA3"),
+        ("Other", counts.get("Other", 0), tile_counts.get("Other", 0), "#E8A800"),
+    ]
+    ax_side.text(0.02, y, "Class", fontweight="bold", fontsize=10, transform=ax_side.transAxes)
+    ax_side.text(0.58, y, "Ann.", ha="right", fontweight="bold", fontsize=10, transform=ax_side.transAxes)
+    ax_side.text(0.98, y, "Tiles", ha="right", fontweight="bold", fontsize=10, transform=ax_side.transAxes)
+    y -= 0.09
+    for label, ann_count, tile_count, color in rows:
+        ax_side.text(0.02, y, label, fontweight="bold", color=color, fontsize=10.5, transform=ax_side.transAxes)
+        ax_side.text(0.58, y, f"{ann_count:,}", ha="right", fontsize=10.5, transform=ax_side.transAxes)
+        ax_side.text(0.98, y, f"{tile_count:,}", ha="right", fontsize=10.5, transform=ax_side.transAxes)
+        y -= 0.085
+
+    ax_side.text(
+        0.02,
+        0.20,
+        "Overlay generated from QuPath\nproject thumbnail plus exported\nR4-25 tile coordinates.",
+        fontsize=9,
+        color="#475467",
+        transform=ax_side.transAxes,
+    )
+    ax_side.text(
+        0.02,
+        0.08,
+        "Raw SVS is intentionally kept\noutside GitHub.",
+        fontsize=9,
+        color="#475467",
+        transform=ax_side.transAxes,
+    )
+
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "qupath_r425_annotation_overlay.png", dpi=200)
+    plt.close(fig)
+
+
 def plot_model_architecture() -> None:
     fig, ax = plt.subplots(figsize=(10.5, 4.2))
     ax.axis("off")
@@ -389,6 +525,7 @@ def main() -> None:
     plot_pipeline_overview()
     plot_qupath_to_ml_workflow()
     plot_qupath_annotation_example()
+    plot_r425_qupath_overlay()
     plot_model_architecture()
 
     if DEFAULT_DATA_DIR.exists():

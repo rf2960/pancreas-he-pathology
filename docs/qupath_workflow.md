@@ -16,6 +16,12 @@ The important point for reviewers: the dataset was not a generic image folder. I
 
 The README includes [figures/qupath_annotation_example.png](../figures/qupath_annotation_example.png), generated from the QuPath project thumbnail and annotation summary for `R4-22.svs`.
 
+It also includes [figures/qupath_r425_annotation_overlay.png](../figures/qupath_r425_annotation_overlay.png), a QuPath-style R4-25 overlay generated from:
+
+- the R4-25 QuPath project thumbnail
+- QuPath annotation summary counts
+- exported R4-25 tile coordinates and labels
+
 The raw `.svs` file is not committed to GitHub because whole-slide images are large and may be subject to project data-use restrictions. If a higher-quality QuPath screenshot is needed, export a snapshot from the QuPath GUI with annotations visible and replace the generated public figure.
 
 ## Class Ontology

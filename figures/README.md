@@ -5,6 +5,7 @@ Figures in this folder support the public README and methods documentation.
 - `pipeline_overview.png`: workflow schematic
 - `qupath_to_ml_workflow.png`: QuPath annotation and tile-export workflow
 - `qupath_annotation_example.png`: representative QuPath slide thumbnail with annotation inventory
+- `qupath_r425_annotation_overlay.png`: R4-25 QuPath-style overlay generated from tile coordinates
 - `model_architecture.png`: modeling and inference architecture
 - `example_tile_mosaic.png`: representative tile examples
 - `tile_class_distribution.png`: local exported tile counts
