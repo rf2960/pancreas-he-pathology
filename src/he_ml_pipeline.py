@@ -1,5 +1,5 @@
 # =============================================================================
-#  H&E PANCREAS PATHOLOGY — SINGLE-STAGE PIPELINE v5 (PDAC excluded)
+#  H&E PANCREAS PATHOLOGY - SINGLE-STAGE PIPELINE v5 (PDAC excluded)
 #
 #  KEY CHANGE from v3: Collapsed two-stage (S1 filter + S2 grader) into one
 #  single 4-class model predicting: ADM / PanIN_LG / PanIN_HG / Other
@@ -9,7 +9,7 @@
 #
 #  Other fixes retained:
 #    - Per-fold Macenko normalization (normalize to test slide each fold)
-#    - Weighted Focal Loss for all 5 classes
+#    - Weighted Focal Loss for all 4 classes
 #    - Slide-stratified balanced sampler
 #    - MixUp augmentation
 #    - 8-pass TTA inference
@@ -88,7 +88,7 @@ def get_dataloader_workers():
 
 
 # =============================================================================
-# STAIN NORMALIZATION — per-fold, normalize TO test slide
+# STAIN NORMALIZATION - per-fold, normalize TO test slide
 # =============================================================================
 
 def fit_macenko_normalizer(df_master, ref_slide_id, n_fit=10):
@@ -192,7 +192,7 @@ def load_master_df(data_dir):
 
 
 # =============================================================================
-# CLASS WEIGHTS — inverse frequency
+# CLASS WEIGHTS - inverse frequency
 # =============================================================================
 
 def compute_class_weights(df, label_col, class_names, device):
@@ -477,7 +477,7 @@ def run_pipeline(cfg, device):
         max_other    = min(len(other_train), len(tissue_train) * 3)
         other_sampled = other_train.sample(n=max_other, random_state=42)
         train_full   = pd.concat([tissue_train, other_sampled]).reset_index(drop=True)
-        print(f"  Training balance — Tissue: {len(tissue_train):,} | Other: {max_other:,} (capped)")
+        print(f"  Training balance - Tissue: {len(tissue_train):,} | Other: {max_other:,} (capped)")
 
         # Per-fold Macenko: normalize everything to match the test slide
         print(f"\n  Normalizing to test slide: {test_slide}")
@@ -488,7 +488,7 @@ def run_pipeline(cfg, device):
         tta_tfs    = build_tta_transforms(macenko_tf)
 
         # Single 4-class model: ADM / PanIN_LG / PanIN_HG / Other
-        print("\n Single-Stage 5-Class Classifier")
+        print("\n Single-Stage 4-Class Classifier")
         train_full['label'] = train_full['label_name'].map(LMAP)
         tr_df, val_df       = train_val_split(train_full)
 
@@ -542,12 +542,12 @@ def run_pipeline(cfg, device):
             prob_df, class_cols, cfg.confidence_threshold, cfg.spatial_window).values
 
         # Reports
-        print(f"\n-- Final Report ({test_slide}) — All Classes --")
+        print(f"\n-- Final Report ({test_slide}) - All Classes --")
         print(classification_report(res_df['Actual'], res_df['Refined'],
                                      labels=ALL_CLASSES, zero_division=0))
 
         tissue_df = res_df[res_df['Actual'] != 'Other']
-        print(f"\n-- Tissue-Only ({test_slide}) — n={len(tissue_df)} — PRIMARY METRIC --")
+        print(f"\n-- Tissue-Only ({test_slide}) - n={len(tissue_df)} - PRIMARY METRIC --")
         if len(tissue_df) > 0:
             print(classification_report(tissue_df['Actual'], tissue_df['Refined'],
                                          labels=CLASSES_S2, zero_division=0))
@@ -566,7 +566,7 @@ def run_pipeline(cfg, device):
     # Aggregate
     if len(all_results) > 1:
         print(f"\n{'='*60}")
-        print("  AGGREGATE RESULTS — ALL FOLDS")
+        print("  AGGREGATE RESULTS - ALL FOLDS")
         print(f"{'='*60}")
         all_actual  = pd.concat([r['Actual']  for r in all_results.values()])
         all_refined = pd.concat([r['Refined'] for r in all_results.values()])
@@ -577,7 +577,7 @@ def run_pipeline(cfg, device):
 
         tissue_actual  = all_actual[all_actual  != 'Other']
         tissue_refined = all_refined[all_actual != 'Other']
-        print(f"\n-- Tissue-Only (n={len(tissue_actual)}) — PRIMARY METRIC --")
+        print(f"\n-- Tissue-Only (n={len(tissue_actual)}) - PRIMARY METRIC --")
         print(classification_report(tissue_actual, tissue_refined,
                                      labels=CLASSES_S2, zero_division=0))
 
@@ -586,7 +586,7 @@ def run_pipeline(cfg, device):
         plt.figure(figsize=(7, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                     xticklabels=CLASSES_S2, yticklabels=CLASSES_S2)
-        plt.title('Aggregate Confusion Matrix — Tissue Only')
+        plt.title('Aggregate Confusion Matrix - Tissue Only')
         plt.ylabel('Actual'); plt.xlabel('Predicted')
         plt.tight_layout()
         plt.savefig(os.path.join(cfg.output_dir, 'confusion_matrix_tissue.png'), dpi=150)
@@ -597,7 +597,7 @@ def run_pipeline(cfg, device):
         plt.figure(figsize=(8, 7))
         sns.heatmap(cm_full, annot=True, fmt='d', cmap='Blues',
                     xticklabels=ALL_CLASSES, yticklabels=ALL_CLASSES)
-        plt.title('Aggregate Confusion Matrix — All Classes')
+        plt.title('Aggregate Confusion Matrix - All Classes')
         plt.ylabel('Actual'); plt.xlabel('Predicted')
         plt.tight_layout()
         plt.savefig(os.path.join(cfg.output_dir, 'confusion_matrix_all.png'), dpi=150)

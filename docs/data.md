@@ -12,11 +12,11 @@ The scripts expect exported tiles in class subfolders:
 
 ```text
 spatial_tiles_dataset/
-├── ADM/
-├── PanIN_LG/
-├── PanIN_HG/
-├── PDAC/
-└── Other/
+|-- ADM/
+|-- PanIN_LG/
+|-- PanIN_HG/
+|-- PDAC/
+`-- Other/
 ```
 
 Each tile filename should contain the slide ID, label, and coordinates:

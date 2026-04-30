@@ -8,13 +8,13 @@ It avoids copying raw whole-slide images or model checkpoints into the repositor
 from __future__ import annotations
 
 import csv
+import math
 import random
-import re
 import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageStat
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -96,6 +96,43 @@ def plot_class_distribution(tiles: dict[str, list[Path]]) -> None:
     plt.close(fig)
 
 
+def tile_content_score(path: Path) -> float:
+    """Score tiles by visual tissue content so README examples avoid blank patches."""
+    img = Image.open(path).convert("RGB").resize((96, 96))
+    gray = ImageOps.grayscale(img)
+    stat_rgb = ImageStat.Stat(img)
+    stat_gray = ImageStat.Stat(gray)
+
+    mean_brightness = sum(stat_rgb.mean) / 3.0
+    channel_std = sum(stat_rgb.stddev) / 3.0
+    contrast = stat_gray.stddev[0]
+
+    # Blank H&E background is usually very bright and low contrast. A useful
+    # public example should have both stain variation and structural texture.
+    non_white_bonus = max(0.0, 245.0 - mean_brightness)
+    return non_white_bonus + (1.8 * channel_std) + (1.5 * contrast)
+
+
+def choose_informative_tiles(paths: list[Path], n: int) -> list[Path]:
+    scored = []
+    for path in paths:
+        try:
+            score = tile_content_score(path)
+        except Exception:
+            continue
+        if math.isfinite(score):
+            scored.append((score, path))
+
+    scored.sort(reverse=True, key=lambda item: item[0])
+    if len(scored) <= n:
+        return [path for _, path in scored]
+
+    # Pick from high-scoring tiles while keeping some visual diversity.
+    candidate_pool = scored[: max(n * 12, 24)]
+    step = max(1, len(candidate_pool) // n)
+    return [candidate_pool[i][1] for i in range(0, min(len(candidate_pool), step * n), step)][:n]
+
+
 def copy_example_tiles(tiles: dict[str, list[Path]], n_per_class: int = 3) -> dict[str, list[Path]]:
     random.seed(7)
     copied: dict[str, list[Path]] = {}
@@ -105,7 +142,10 @@ def copy_example_tiles(tiles: dict[str, list[Path]], n_per_class: int = 3) -> di
             continue
         label_dir = EXAMPLES_DIR / label
         label_dir.mkdir(parents=True, exist_ok=True)
-        chosen = random.sample(paths, min(n_per_class, len(paths)))
+        for old_tile in label_dir.glob("*"):
+            if old_tile.is_file():
+                old_tile.unlink()
+        chosen = choose_informative_tiles(paths, min(n_per_class, len(paths)))
         copied[label] = []
         for idx, src in enumerate(chosen, start=1):
             dst = label_dir / f"{label}_{idx}{src.suffix.lower()}"
@@ -191,6 +231,55 @@ def plot_pipeline_overview() -> None:
     plt.close(fig)
 
 
+def plot_model_architecture() -> None:
+    fig, ax = plt.subplots(figsize=(10.5, 4.2))
+    ax.axis("off")
+
+    layers = [
+        ("H&E tile", "RGB patch\nfrom QuPath"),
+        ("Stain norm", "Per-fold\nMacenko fit"),
+        ("Augment", "Flip, rotate,\ncolor jitter, MixUp"),
+        ("Backbone", "ImageNet\nWideResNet-50-2"),
+        ("Head", "Dropout + dense\n4-class logits"),
+        ("Inference", "8-pass TTA +\nspatial consensus"),
+    ]
+
+    x_positions = [0.08, 0.245, 0.41, 0.58, 0.745, 0.91]
+    for idx, ((title, body), x) in enumerate(zip(layers, x_positions)):
+        ax.text(
+            x,
+            0.62,
+            title,
+            ha="center",
+            va="center",
+            fontsize=11,
+            fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.48", fc="#F2F7FF", ec="#4C78A8", lw=1.1),
+        )
+        ax.text(x, 0.34, body, ha="center", va="center", fontsize=9.2, color="#344054")
+        if idx < len(layers) - 1:
+            ax.annotate(
+                "",
+                xy=(x_positions[idx + 1] - 0.063, 0.62),
+                xytext=(x + 0.063, 0.62),
+                arrowprops=dict(arrowstyle="->", lw=1.4, color="#475467"),
+            )
+
+    ax.text(
+        0.5,
+        0.08,
+        "Training objective: weighted focal loss with label smoothing; validation: leave-one-slide-out tissue macro F1.",
+        ha="center",
+        va="center",
+        fontsize=10,
+        color="#1D2939",
+    )
+    ax.set_title("Modeling pipeline", fontsize=14, pad=18)
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "model_architecture.png", dpi=200)
+    plt.close(fig)
+
+
 def write_dataset_summary(tiles: dict[str, list[Path]]) -> None:
     rows = ["class,tile_count"]
     for label in ["ADM", "PanIN_LG", "PanIN_HG", "PDAC", "Other"]:
@@ -202,6 +291,7 @@ def main() -> None:
     ensure_dirs()
     plot_threshold_summary()
     plot_pipeline_overview()
+    plot_model_architecture()
 
     if DEFAULT_DATA_DIR.exists():
         tiles = collect_tiles(DEFAULT_DATA_DIR)

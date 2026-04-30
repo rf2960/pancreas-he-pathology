@@ -1,5 +1,5 @@
 # =============================================================================
-#  THRESHOLD TUNING — Post-hoc optimization on saved prediction CSVs
+#  THRESHOLD TUNING - Post-hoc optimization on saved prediction CSVs
 #
 #  Runs after all 6 folds complete. No retraining needed.
 #  Finds the optimal per-class probability threshold that maximizes
@@ -140,8 +140,8 @@ def main():
         orig_macro  = orig_report['macro avg']['f1-score']
         tuned_macro = tuned_report['macro avg']['f1-score']
         delta       = tuned_macro - orig_macro
-        print(f"  Macro F1: {orig_macro:.3f} → {tuned_macro:.3f} "
-              f"({'↑' if delta > 0 else '↓'}{abs(delta):.3f})")
+        print(f"  Macro F1: {orig_macro:.3f} -> {tuned_macro:.3f} "
+              f"({'+' if delta > 0 else '-'}{abs(delta):.3f})")
 
         # Save tuned CSV
         df.to_csv(os.path.join(cfg.output_dir, f'results_{slide}_tuned.csv'), index=False)
@@ -154,10 +154,10 @@ def main():
             'thresholds': best_thresh
         }
 
-    # ── Aggregate comparison ──────────────────────────────────────────────────
+    # -- Aggregate comparison --------------------------------------------------
     if len(all_results) > 1:
         print(f"\n{'='*55}")
-        print("  AGGREGATE — ALL FOLDS")
+        print("  AGGREGATE - ALL FOLDS")
         print(f"{'='*55}")
 
         all_actual         = pd.concat([r['Actual']  for r in all_results.values()])
@@ -183,7 +183,7 @@ def main():
         for slide, r in per_slide_report.items():
             delta = r['tuned_macro'] - r['orig_macro']
             print(f"{slide:<10} {r['orig_macro']:>10.3f} {r['tuned_macro']:>10.3f} "
-                  f"{'↑' if delta > 0 else '↓'}{abs(delta):>9.3f}")
+                  f"{'+' if delta > 0 else '-'}{abs(delta):>9.3f}")
 
         # Confusion matrices
         cm_orig = confusion_matrix(tissue_actual, tissue_orig,   labels=TISSUE_CLS)
@@ -192,12 +192,12 @@ def main():
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         sns.heatmap(cm_orig, annot=True, fmt='d', cmap='Blues', ax=axes[0],
                     xticklabels=TISSUE_CLS, yticklabels=TISSUE_CLS)
-        axes[0].set_title('Original — Tissue Only')
+        axes[0].set_title('Original - Tissue Only')
         axes[0].set_ylabel('Actual'); axes[0].set_xlabel('Predicted')
 
         sns.heatmap(cm_tune, annot=True, fmt='d', cmap='Greens', ax=axes[1],
                     xticklabels=TISSUE_CLS, yticklabels=TISSUE_CLS)
-        axes[1].set_title('Threshold Tuned — Tissue Only')
+        axes[1].set_title('Threshold Tuned - Tissue Only')
         axes[1].set_ylabel('Actual'); axes[1].set_xlabel('Predicted')
 
         plt.tight_layout()

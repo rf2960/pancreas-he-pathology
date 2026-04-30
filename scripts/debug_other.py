@@ -1,5 +1,5 @@
 # =============================================================================
-#  DEBUG SCRIPT — Test Other tile flow through the full pipeline
+#  DEBUG SCRIPT - Test Other tile flow through the full pipeline
 #  No training, no GPU needed, finishes in ~2 minutes.
 #
 #  Run from project folder:
@@ -7,10 +7,10 @@
 #    python debug_other.py --data_dir /custom/path/to/spatial_tiles_dataset
 #
 #  What this checks:
-#    Step 1 — Are Other tiles loading into df_master correctly?
-#    Step 2 — Are they present in test_full for a specific slide?
-#    Step 3 — Do they survive inference and appear in res_df['Actual']?
-#    Step 4 — Does Stage 1 diagnostic show correct Other support?
+#    Step 1 - Are Other tiles loading into df_master correctly?
+#    Step 2 - Are they present in test_full for a specific slide?
+#    Step 3 - Do they survive inference and appear in res_df['Actual']?
+#    Step 4 - Does Stage 1 diagnostic show correct Other support?
 # =============================================================================
 
 import os, re, random, argparse, warnings
@@ -29,7 +29,7 @@ from sklearn.metrics import classification_report
 
 warnings.filterwarnings('ignore')
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# -- Config --------------------------------------------------------------------
 parser = argparse.ArgumentParser()
 script_dir = Path(__file__).parent.resolve()
 parser.add_argument('--data_dir',  type=str,
@@ -40,7 +40,7 @@ parser.add_argument('--n_tiles',    type=int, default=200,
                     help='Max tiles per class to sample (keeps it fast)')
 cfg = parser.parse_args()
 
-DEVICE      = torch.device('cpu')   # intentionally CPU — this is just a debug run
+DEVICE      = torch.device('cpu')   # intentionally CPU - this is just a debug run
 ALL_CLASSES = ['ADM', 'PanIN_LG', 'PanIN_HG', 'PDAC', 'Other']
 CLASSES_S1  = ['Other', 'Tissue']
 CLASSES_S2  = ['ADM', 'PanIN_LG', 'PanIN_HG', 'PDAC']
@@ -55,9 +55,9 @@ print("=" * 60)
 
 
 # =============================================================================
-# STEP 1 — Load df_master and confirm Other tiles exist
+# STEP 1 - Load df_master and confirm Other tiles exist
 # =============================================================================
-print("\n── Step 1: Load df_master ──")
+print("\n-- Step 1: Load df_master --")
 
 pattern = re.compile(r"(.+?)_(.+?)_\[x=(\d+),y=(\d+)\]")
 data = []
@@ -81,14 +81,14 @@ print(f"\nBy class:\n{df_master['label_name'].value_counts().to_string()}")
 print(f"\nBy slide:\n{df_master['slide_id'].value_counts().to_string()}")
 
 assert 'Other' in df_master['label_name'].values, \
-    "FAIL: 'Other' class not found in df_master at all — check folder name or file extensions"
-print("\n✓ Other class present in df_master")
+    "FAIL: 'Other' class not found in df_master at all - check folder name or file extensions"
+print("\n[OK] Other class present in df_master")
 
 
 # =============================================================================
-# STEP 2 — Build test_full and confirm Other tiles are there
+# STEP 2 - Build test_full and confirm Other tiles are there
 # =============================================================================
-print(f"\n── Step 2: test_full for {cfg.test_slide} ──")
+print(f"\n-- Step 2: test_full for {cfg.test_slide} --")
 
 assert cfg.test_slide in df_master['slide_id'].values, \
     f"FAIL: slide '{cfg.test_slide}' not found. Available: {sorted(df_master['slide_id'].unique())}"
@@ -100,19 +100,19 @@ print(f"test_full size: {len(test_full):,}")
 print(f"\ntest_full by class:\n{test_full['label_name'].value_counts().to_string()}")
 
 if 'Other' not in test_full['label_name'].values:
-    print(f"\n⚠ Other is NOT present in {cfg.test_slide}'s test tiles")
+    print(f"\n[WARN] Other is NOT present in {cfg.test_slide}'s test tiles")
     print("  This means R4-23 genuinely has no Other tiles on disk for that slide.")
-    print("  Check your QuPath export — did you export Other tiles for all slides?")
+    print("  Check your QuPath export - did you export Other tiles for all slides?")
 else:
     n_other = (test_full['label_name'] == 'Other').sum()
-    print(f"\n✓ Other present in test_full: {n_other:,} tiles")
+    print(f"\n[OK] Other present in test_full: {n_other:,} tiles")
 
 
 # =============================================================================
-# STEP 3 — Subsample for speed and run mock inference
-#           (untrained model — we only care about data flow, not accuracy)
+# STEP 3 - Subsample for speed and run mock inference
+#           (untrained model - we only care about data flow, not accuracy)
 # =============================================================================
-print(f"\n── Step 3: Mock inference with untrained model ──")
+print(f"\n-- Step 3: Mock inference with untrained model --")
 print(f"(Sampling up to {cfg.n_tiles} tiles per class for speed)")
 
 # Subsample test_full
@@ -126,13 +126,13 @@ test_small = pd.concat(subsets).reset_index(drop=True)
 print(f"Subsampled test size: {len(test_small)}")
 print(f"Classes present:\n{test_small['label_name'].value_counts().to_string()}")
 
-# Minimal transform (no Macenko — not needed for flow test)
+# Minimal transform (no Macenko - not needed for flow test)
 simple_tf = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# Tiny untrained models (random weights — just testing data flow)
+# Tiny untrained models (random weights - just testing data flow)
 model_s1 = models.wide_resnet50_2(weights=None)
 model_s1.fc = nn.Linear(model_s1.fc.in_features, 2)
 model_s1.eval()
@@ -141,7 +141,7 @@ model_s2 = models.wide_resnet50_2(weights=None)
 model_s2.fc = nn.Linear(model_s2.fc.in_features, 4)
 model_s2.eval()
 
-print("\nRunning inference (random weights — accuracy meaningless, flow is what matters)...")
+print("\nRunning inference (random weights - accuracy meaningless, flow is what matters)...")
 
 infer_data = []
 pil_images = [Image.open(p).convert('RGB') for p in test_small['path']]
@@ -181,9 +181,9 @@ print(f"\nres_df['Actual'] counts:\n{res_df['Actual'].value_counts().to_string()
 
 
 # =============================================================================
-# STEP 4 — Stage 1 Diagnostic (the actual bug check)
+# STEP 4 - Stage 1 Diagnostic (the actual bug check)
 # =============================================================================
-print(f"\n── Step 4: Stage 1 Diagnostic ──")
+print(f"\n-- Step 4: Stage 1 Diagnostic --")
 
 res_df['S1_Actual'] = res_df['Actual'].apply(
     lambda x: 'Tissue' if x != 'Other' else 'Other')
@@ -195,16 +195,16 @@ print(classification_report(res_df['S1_Actual'], res_df['S1_Pred'],
 
 other_support = (res_df['S1_Actual'] == 'Other').sum()
 if other_support == 0:
-    print("✗ BUG CONFIRMED: Other support = 0 in Stage 1 diagnostic")
+    print("[FAIL] BUG CONFIRMED: Other support = 0 in Stage 1 diagnostic")
     print("  Other tiles exist in test_full but are not reaching res_df['Actual']")
-    print("  → The bug is inside the inference loop, not in data loading")
-    print("  → Check: are pil_images being loaded from test_full correctly?")
-    print("  → Check: is test_reset being indexed correctly in the inner loop?")
+    print("  -> The bug is inside the inference loop, not in data loading")
+    print("  -> Check: are pil_images being loaded from test_full correctly?")
+    print("  -> Check: is test_reset being indexed correctly in the inner loop?")
 else:
-    print(f"✓ Other support = {other_support} — data flow is correct!")
+    print(f"[OK] Other support = {other_support} - data flow is correct!")
     print("  The bug was likely a one-off Colab issue. Full pipeline should work.")
 
-print("\n── Summary ──")
+print("\n-- Summary --")
 print(f"  df_master Other tiles:    {(df_master['label_name'] == 'Other').sum():,}")
 print(f"  test_full Other tiles:    {(test_full['label_name'] == 'Other').sum():,}")
 print(f"  test_small Other tiles:   {(test_small['label_name'] == 'Other').sum()}")
@@ -212,6 +212,6 @@ print(f"  res_df Other in Actual:   {(res_df['Actual'] == 'Other').sum()}")
 print(f"  Stage 1 Other support:    {other_support}")
 print()
 if other_support > 0:
-    print("✓ All checks passed — safe to run full pipeline on AWS")
+    print("[OK] All checks passed - safe to run full pipeline on AWS")
 else:
-    print("✗ Bug still present — share output above and we'll fix before full run")
+    print("[FAIL] Bug still present - share output above and we'll fix before full run")

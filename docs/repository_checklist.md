@@ -11,6 +11,10 @@
 - [x] Citation metadata
 - [x] License
 - [x] `.gitignore` excluding large data, checkpoints, and credentials
+- [x] Model card
+- [x] Experiment report
+- [x] CI repository validation
+- [x] Resume-positioning notes
 
 Before creating an archival release, consider adding:
 
