@@ -1,0 +1,9 @@
+metric,value,display
+mean_original_tissue_macro_f1,0.41294747116739394,0.413
+mean_tuned_tissue_macro_f1,0.5730246708445352,0.573
+mean_threshold_tuning_f1_gain,0.16007719967714124,+0.160
+mean_tuned_tissue_accuracy,0.7764610957847654,77.6%
+mean_tuned_tissue_balanced_accuracy,0.5701190591895683,57.0%
+evaluated_tiles,39944.0,"39,944"
+tissue_tiles,4210.0,"4,210"
+held_out_slides,6.0,6

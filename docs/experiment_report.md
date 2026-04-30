@@ -62,3 +62,19 @@ Headline evaluation from saved outputs:
 ## Interpretation
 
 The project is strongest as a complete ML workflow: data extraction, leakage-aware validation, class imbalance handling, inference post-processing, reproducible reporting, and honest artifact governance. The tuned tissue macro F1 indicates that the post-processing step recovers tissue-class signal, but class-level precision remains limited for rare classes. That limitation is expected given the dataset imbalance and should motivate additional annotation, nested threshold validation, and larger slide coverage before any clinical use.
+
+## Novelty
+
+- Connects QuPath annotation engineering directly to a reproducible PyTorch modeling pipeline.
+- Preserves slide ID and tile coordinates from filenames to support leakage-aware validation and spatial post-processing.
+- Uses a multi-step imbalance strategy: capped `Other` sampling, class weighting, focal loss, balanced sampling, and macro-F1 reporting.
+- Packages a biomedical ML project for public GitHub review without exposing protected raw data or credentials.
+
+## Future Work
+
+- Add more slides and improve rare-class coverage.
+- Compare the WideResNet baseline with pathology foundation models and self-supervised encoders.
+- Use nested cross-validation for threshold tuning.
+- Add probability calibration and uncertainty summaries.
+- Aggregate tile predictions into slide-level lesion burden features.
+- Publish selected checkpoints through GitHub Releases only if data-sharing approval allows it.

@@ -15,6 +15,9 @@
 - [x] Experiment report
 - [x] CI repository validation
 - [x] Resume-positioning notes
+- [x] QuPath workflow documentation
+- [x] Storage cleanup plan
+- [x] Headline accuracy and balanced-accuracy summaries
 
 Before creating an archival release, consider adding:
 

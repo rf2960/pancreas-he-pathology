@@ -21,9 +21,14 @@ def test_required_public_files_exist() -> None:
         "scripts/summarize_results.py",
         "docs/model_card.md",
         "docs/experiment_report.md",
+        "docs/qupath_workflow.md",
+        "docs/storage_cleanup_plan.md",
         "figures/example_tile_mosaic.png",
         "figures/model_architecture.png",
+        "figures/qupath_to_ml_workflow.png",
+        "figures/tissue_accuracy_summary.png",
         "results/aggregate_metrics.md",
+        "results/headline_metrics.csv",
     ]
     missing = [path for path in required if not (REPO_ROOT / path).exists()]
     assert not missing

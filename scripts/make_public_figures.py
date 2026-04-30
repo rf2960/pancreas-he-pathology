@@ -231,6 +231,48 @@ def plot_pipeline_overview() -> None:
     plt.close(fig)
 
 
+def plot_qupath_to_ml_workflow() -> None:
+    fig, ax = plt.subplots(figsize=(10.8, 4.0))
+    ax.axis("off")
+
+    steps = [
+        ("QuPath project", "H&E WSI review\nand class ontology"),
+        ("Annotations", "ADM, PanIN_LG,\nPanIN_HG, Other"),
+        ("Groovy export", "Coordinate-aware\npatch extraction"),
+        ("Tile dataset", "Class folders +\nslide/x/y metadata"),
+        ("PyTorch", "Slide-held-out\nCV training"),
+        ("Reports", "CSV predictions,\nfigures, metrics"),
+    ]
+    x_positions = [0.075, 0.24, 0.405, 0.57, 0.735, 0.90]
+    colors = ["#F7F7F7", "#FFF4E5", "#EAF3FF", "#ECFDF3", "#F4F3FF", "#FDF2FA"]
+    edges = ["#667085", "#F79009", "#2E90FA", "#12B76A", "#7A5AF8", "#EE46BC"]
+
+    for idx, ((title, body), x) in enumerate(zip(steps, x_positions)):
+        ax.text(
+            x,
+            0.62,
+            title,
+            ha="center",
+            va="center",
+            fontsize=10.5,
+            fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.45", fc=colors[idx], ec=edges[idx], lw=1.1),
+        )
+        ax.text(x, 0.33, body, ha="center", va="center", fontsize=9, color="#344054")
+        if idx < len(steps) - 1:
+            ax.annotate(
+                "",
+                xy=(x_positions[idx + 1] - 0.063, 0.62),
+                xytext=(x + 0.063, 0.62),
+                arrowprops=dict(arrowstyle="->", lw=1.35, color="#475467"),
+            )
+
+    ax.set_title("QuPath-to-ML data engineering workflow", fontsize=14, pad=16)
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "qupath_to_ml_workflow.png", dpi=200)
+    plt.close(fig)
+
+
 def plot_model_architecture() -> None:
     fig, ax = plt.subplots(figsize=(10.5, 4.2))
     ax.axis("off")
@@ -291,6 +333,7 @@ def main() -> None:
     ensure_dirs()
     plot_threshold_summary()
     plot_pipeline_overview()
+    plot_qupath_to_ml_workflow()
     plot_model_architecture()
 
     if DEFAULT_DATA_DIR.exists():

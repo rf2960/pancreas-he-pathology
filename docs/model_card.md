@@ -51,6 +51,8 @@ Current saved-output headline:
 | Mean original tissue macro F1 | 0.413 |
 | Mean tuned tissue macro F1 | 0.573 |
 | Mean threshold-tuning gain | +0.160 |
+| Mean tuned tissue accuracy | 77.6% |
+| Mean tuned tissue balanced accuracy | 57.0% |
 | Evaluated tiles | 39,944 |
 
 ## Limitations

@@ -26,6 +26,8 @@ The saved evaluation outputs cover **39,944 tile predictions** across **6 held-o
 | Mean original tissue macro F1 | 0.413 |
 | Mean tuned tissue macro F1 | 0.573 |
 | Mean threshold-tuning gain | +0.160 |
+| Mean tuned tissue accuracy | 77.6% |
+| Mean tuned tissue balanced accuracy | 57.0% |
 | Held-out slides | 6 |
 
 Threshold tuning improved tissue-class macro F1 on every held-out slide in the saved outputs.
@@ -33,6 +35,16 @@ Threshold tuning improved tissue-class macro F1 on every held-out slide in the s
 ![Threshold tuning summary](figures/threshold_tuning_summary.png)
 
 ![Per-slide tuning gain](figures/per_slide_f1_delta.png)
+
+![Tissue accuracy summary](figures/tissue_accuracy_summary.png)
+
+## QuPath Annotation Engineering
+
+This project includes the upstream pathology data-engineering work, not only the PyTorch model. QuPath was used to review H&E whole-slide images, define lesion classes, export region-level annotations, and run Groovy scripts that convert annotated regions into coordinate-aware tile datasets.
+
+![QuPath-to-ML workflow](figures/qupath_to_ml_workflow.png)
+
+The repository includes the QuPath scripts in [qupath_scripts/](qupath_scripts/) and documents the workflow in [docs/qupath_workflow.md](docs/qupath_workflow.md).
 
 ## Model Architecture
 
@@ -46,7 +58,6 @@ Representative public examples are selected with a content-aware sampler so READ
 
 ## Additional Figures
 
-- [Tuned class metric heatmap](figures/class_f1_heatmap.png)
 - [Learned threshold heatmap](figures/threshold_heatmap.png)
 - [All-class confusion matrix](figures/confusion_matrix_all.png)
 - [Tissue-only confusion matrix](figures/confusion_matrix_tissue.png)
@@ -121,6 +132,32 @@ See [docs/data.md](docs/data.md), [models/README.md](models/README.md), and [doc
 - [Reproducibility](docs/reproducibility.md)
 - [Resume positioning](docs/resume_positioning.md)
 - [Project inventory](docs/project_inventory.md)
+- [QuPath workflow](docs/qupath_workflow.md)
+- [Storage cleanup plan](docs/storage_cleanup_plan.md)
+
+## Novelty
+
+- Integrates QuPath annotation scripting with a reproducible PyTorch histopathology pipeline.
+- Uses slide-held-out validation rather than random tile splitting to reduce leakage.
+- Combines stain normalization, focal loss, balanced sampling, MixUp, test-time augmentation, spatial consensus, and post-hoc threshold tuning in one coherent workflow.
+- Packages sensitive biomedical research work as a public, resume-ready repository without exposing raw scans, credentials, or large checkpoints.
+
+## Limitations
+
+- The current model is research-grade and not clinically deployable.
+- Class imbalance remains substantial, especially for `PanIN_LG`.
+- PDAC is excluded from the final public classifier because available PDAC tiles are not well distributed across slides.
+- Threshold tuning should be nested or validated on independent slides before publication-level claims.
+- External validation on another cohort or staining protocol has not yet been performed.
+
+## Future Work
+
+- Add more annotated slides, especially for rare lesion classes.
+- Evaluate modern histopathology foundation models or self-supervised encoders against the current WideResNet baseline.
+- Add nested validation for threshold selection and calibration curves.
+- Build slide-level aggregation from tile predictions for specimen-level summaries.
+- Add experiment tracking with MLflow or Weights & Biases.
+- Package a small inference demo using approved sample tiles.
 
 ## Citation
 
