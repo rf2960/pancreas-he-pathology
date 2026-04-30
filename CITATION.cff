@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it using these metadata."
+title: "H&E Pancreas Pathology Tile Classifier"
+authors:
+  - family-names: Feng
+    given-names: Ruochen
+year: 2026
+repository-code: "https://github.com/rf2960/H-E"
+license: MIT
+keywords:
+  - histopathology
+  - H&E
+  - pancreas
+  - QuPath
+  - PyTorch
+  - tile classification

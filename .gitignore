@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+*.conda
+
+# Private credentials
+*.pem
+*.key
+*.crt
+secrets/
+
+# Large local data and model artifacts
+spatial_tiles_dataset/
+pipeline_outputs/
+QuPath Project/
+H&E quant-Rama/
+*.svs
+*.tif
+*.tiff
+*.ndpi
+*.scn
+*.qptiff
+*.pth
+*.pt
+*.ckpt
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,21 @@
+name: he-pathology
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - pillow
+  - tqdm
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pip:
+      - torchstain
+      - albumentations
