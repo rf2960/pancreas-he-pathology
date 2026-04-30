@@ -25,6 +25,7 @@ def test_required_public_files_exist() -> None:
         "docs/storage_cleanup_plan.md",
         "figures/example_tile_mosaic.png",
         "figures/model_architecture.png",
+        "figures/qupath_annotation_example.png",
         "figures/qupath_to_ml_workflow.png",
         "figures/tissue_accuracy_summary.png",
         "results/aggregate_metrics.md",

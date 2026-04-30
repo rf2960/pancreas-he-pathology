@@ -12,6 +12,12 @@ QuPath is the bridge between raw H&E whole-slide images and the ML-ready tile da
 
 The important point for reviewers: the dataset was not a generic image folder. It was engineered from pathology annotations and whole-slide spatial coordinates.
 
+## Public QuPath Example
+
+The README includes [figures/qupath_annotation_example.png](../figures/qupath_annotation_example.png), generated from the QuPath project thumbnail and annotation summary for `R4-22.svs`.
+
+The raw `.svs` file is not committed to GitHub because whole-slide images are large and may be subject to project data-use restrictions. If a higher-quality QuPath screenshot is needed, export a snapshot from the QuPath GUI with annotations visible and replace the generated public figure.
+
 ## Class Ontology
 
 The public four-class model uses:
@@ -68,3 +74,12 @@ Random image splitting can inflate performance when neighboring tiles from the s
 ## Public Release Policy
 
 The repository includes scripts and sample tiles, but not raw whole-slide images or the full QuPath project database. That keeps the GitHub release useful for technical review while respecting data size and access constraints.
+
+## How To Export A Better QuPath Screenshot
+
+1. Open the QuPath project locally.
+2. Open a representative slide such as `R4-22.svs`.
+3. Turn on annotation overlays and class colors.
+4. Zoom to a region where annotations are visible.
+5. Export a snapshot as PNG.
+6. Add the PNG to `figures/` and reference it in the README.

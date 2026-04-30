@@ -44,6 +44,8 @@ This project includes the upstream pathology data-engineering work, not only the
 
 ![QuPath-to-ML workflow](figures/qupath_to_ml_workflow.png)
 
+![QuPath annotation example](figures/qupath_annotation_example.png)
+
 The repository includes the QuPath scripts in [qupath_scripts/](qupath_scripts/) and documents the workflow in [docs/qupath_workflow.md](docs/qupath_workflow.md).
 
 ## Model Architecture

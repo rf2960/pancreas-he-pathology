@@ -8,13 +8,14 @@ It avoids copying raw whole-slide images or model checkpoints into the repositor
 from __future__ import annotations
 
 import csv
+import json
 import math
 import random
 import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from PIL import Image, ImageOps, ImageStat
+from PIL import Image, ImageDraw, ImageOps, ImageStat
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,7 @@ FIGURES_DIR = REPO_ROOT / "figures"
 EXAMPLES_DIR = REPO_ROOT / "examples" / "tiles"
 
 DEFAULT_DATA_DIR = Path(r"C:\Users\ruoch\Desktop\CU\Research\H&E ML\spatial_tiles_dataset")
+DEFAULT_QUPATH_ENTRY = Path(r"C:\Users\ruoch\Desktop\CU\Research\H&E ML\QuPath Project\data\15")
 
 CLASSES = ["ADM", "PanIN_LG", "PanIN_HG", "Other"]
 TISSUE_CLASSES = ["ADM", "PanIN_LG", "PanIN_HG"]
@@ -273,6 +275,58 @@ def plot_qupath_to_ml_workflow() -> None:
     plt.close(fig)
 
 
+def plot_qupath_annotation_example() -> None:
+    thumbnail_path = DEFAULT_QUPATH_ENTRY / "thumbnail.jpg"
+    summary_path = DEFAULT_QUPATH_ENTRY / "summary.json"
+    if not thumbnail_path.exists() or not summary_path.exists():
+        return
+
+    thumb = Image.open(thumbnail_path).convert("RGB")
+    thumb = ImageOps.contain(thumb, (920, 330), method=Image.Resampling.LANCZOS)
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    counts = summary["hierarchy"]["annotationClassificationCounts"]
+
+    fig, axes = plt.subplots(
+        1,
+        2,
+        figsize=(11, 4.6),
+        gridspec_kw={"width_ratios": [2.15, 1.0]},
+    )
+    axes[0].imshow(thumb)
+    axes[0].axis("off")
+    axes[0].set_title("QuPath project thumbnail: R4-22.svs", fontsize=12, pad=10)
+
+    display_counts = [
+        ("ADM", counts.get("ADM", 0), "#4C78A8"),
+        ("PanIN LG", counts.get("PanIN LG", 0), "#F58518"),
+        ("PanIN HG", counts.get("PanIN HG", 0), "#54A24B"),
+        ("Other", counts.get("Other", 0), "#9D755D"),
+        ("Total annotations", counts.get("ADM", 0) + counts.get("PanIN LG", 0) + counts.get("PanIN HG", 0) + counts.get("Other", 0), "#344054"),
+    ]
+
+    axes[1].axis("off")
+    axes[1].set_title("Human annotation inventory", fontsize=12, pad=10)
+    y = 0.86
+    for label, value, color in display_counts:
+        axes[1].text(0.04, y, label, fontsize=11, color=color, fontweight="bold", transform=axes[1].transAxes)
+        axes[1].text(0.96, y, f"{value:,}", fontsize=11, ha="right", color="#101828", transform=axes[1].transAxes)
+        y -= 0.14
+
+    axes[1].text(
+        0.04,
+        0.08,
+        "Raw SVS and QuPath databases are kept outside GitHub;\nthis public figure shows the annotation provenance.",
+        fontsize=8.8,
+        color="#475467",
+        transform=axes[1].transAxes,
+    )
+
+    fig.suptitle("Human-annotated QuPath slide example", fontsize=14, fontweight="bold", y=0.98)
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "qupath_annotation_example.png", dpi=200)
+    plt.close(fig)
+
+
 def plot_model_architecture() -> None:
     fig, ax = plt.subplots(figsize=(10.5, 4.2))
     ax.axis("off")
@@ -334,6 +388,7 @@ def main() -> None:
     plot_threshold_summary()
     plot_pipeline_overview()
     plot_qupath_to_ml_workflow()
+    plot_qupath_annotation_example()
     plot_model_architecture()
 
     if DEFAULT_DATA_DIR.exists():
